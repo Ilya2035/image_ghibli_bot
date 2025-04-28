@@ -4,6 +4,7 @@ import io
 
 from aiogram import F, Router
 from aiogram.types import BufferedInputFile, Message
+from aiogram.utils.chat_action import ChatActionSender
 
 from crud.request_transactions import add_photo_request
 from crud.save_transactions import save_output_to_db
@@ -48,16 +49,18 @@ async def handle_photo(message: Message) -> None:
         "Рисую версию в стиле Ghibli, подождите…"
     )
 
-    anime_bytes = await replicate_image(jpeg_bytes)
+    async with ChatActionSender.typing(message.chat.id, message.bot):
+        anime_bytes = await replicate_image(jpeg_bytes)
 
     async with async_session() as session:
         await save_output_to_db(session, req.id, anime_bytes)
         await session.commit()
 
     if anime_bytes:
-        await message.answer_photo(
-            BufferedInputFile(anime_bytes, filename="ghibli.png"),
-            caption="Готово! 🎨",
-        )
+        preview = BufferedInputFile(anime_bytes, filename="ghibli_preview.jpg")
+        original = BufferedInputFile(anime_bytes, filename="ghibli_full.png")
+
+        await message.answer_photo(preview, caption="Готово! 🎨 (превью)")
+        await message.answer_document(original, caption="Ваш файл")
     else:
         await message.answer("Не удалось преобразовать изображение 😔")

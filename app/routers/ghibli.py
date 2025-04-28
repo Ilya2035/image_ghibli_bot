@@ -7,8 +7,8 @@ from aiogram.types import Message, BufferedInputFile
 from db.session import async_session
 from crud.user_transactions import add_user
 from crud.request_transactions import add_photo_request
-from crud.stylize_transactions import stylize_from_db
 from crud.save_transactions import save_output_to_db
+from utils.image_generation import replicate_anime
 
 photo_router = Router()
 
@@ -17,43 +17,49 @@ photo_router = Router()
 async def handle_photo(message: Message) -> None:
     """
     1. скачиваем фото (bytes)
-    2. создаём / берём пользователя
-    3. пишем запрос в БД (status='processing')
-    4. шлём «ждите…»
-    5. вызываем OpenAI → получаем результат
-    6. сохраняем результат (status='done' / 'error')
-    7. отправляем картинку или сообщение об ошибке
+    2. фиксируем пользователя и создаём Request(status='processing')
+    3. шлём 'ждите…'
+    4. отправляем фото на Replicate → получаем anime-bytes
+    5. обновляем Request (status='done'/'error')
+    6. отправляем пользователю результат или ошибку
     """
     bot = message.bot
     tg_id = str(message.from_user.id)
     photo = message.photo[-1]
 
+    # 1. скачать фото из Telegram
     tg_file = await bot.get_file(photo.file_id)
     buf = io.BytesIO()
     await bot.download_file(tg_file.file_path, destination=buf)
-    raw_bytes = buf.getvalue()
+    jpeg_bytes = buf.getvalue()
 
+    # 2. пользователь + запись запроса
     async with async_session() as session:
         user = await add_user(session, tg_id)
         req = await add_photo_request(
             session,
             user_id=user.user_id,
-            photo_bytes=raw_bytes,
+            photo_bytes=jpeg_bytes,
         )
 
+    # 3. сообщение пользователю
     await message.answer(
         "Фото загружено ✅\n"
-        "Рисую в стиле Ghibli, пожалуйста подождите…"
+        "Рисую аниме-версию в стиле Ghibli, подождите…"
     )
 
-    async with async_session() as session:
-        result_bytes = await stylize_from_db(session, req.id)
-        await save_output_to_db(session, req.id, result_bytes)
+    # 4. запрос к Replicate
+    anime_bytes = await replicate_anime(jpeg_bytes)
 
-    if result_bytes:
+    # 5. обновляем запись
+    async with async_session() as session:
+        await save_output_to_db(session, req.id, anime_bytes)
+
+    # 6. ответ
+    if anime_bytes:
         await message.answer_photo(
-            BufferedInputFile(result_bytes, filename="ghibli.png"),  # ✔
+            BufferedInputFile(anime_bytes, filename="ghibli.png"),
             caption="Готово! 🎨"
         )
     else:
-        await message.answer("Не удалось обработать изображение 😔")
+        await message.answer("Не удалось преобразовать изображение 😔")

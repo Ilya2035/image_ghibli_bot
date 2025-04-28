@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.orm_models import Request
-from utils.image_generation import ghibli_style_transfer
+from utils.image_generation import replicate_anime
 
 
 async def stylize_from_db(session: AsyncSession, request_id: int) -> Optional[bytes]:
@@ -9,4 +9,4 @@ async def stylize_from_db(session: AsyncSession, request_id: int) -> Optional[by
     if not req:
         print(f"Request {request_id} not found")
         return None
-    return await ghibli_style_transfer(req.input_file)
+    return await replicate_anime(req.input_file)

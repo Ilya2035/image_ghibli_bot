@@ -7,7 +7,7 @@ from models.orm_models import Request
 async def add_photo_request(
     session: AsyncSession,
     *,
-    user_id: str,
+    user_id: int,
     photo_bytes: bytes,
 ) -> Request:
     result = await session.execute(
@@ -19,5 +19,6 @@ async def add_photo_request(
         )
         .returning(Request)
     )
-    await session.commit()
-    return result.scalar_one()
+    request = result.scalar_one()
+    await session.flush()
+    return request

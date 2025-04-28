@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-from decouple import config
+from core.config import settings
 import openai
 
 logging.basicConfig(
@@ -14,9 +14,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 bot = Bot(
-    token=config('TOKEN'),
+    token=settings.TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML),
 )
 dp = Dispatcher(storage=MemoryStorage())
 
-openai.api_key = config('OPENAI_API_KEY')
+openai.api_key = settings.OPENAI_API_KEY

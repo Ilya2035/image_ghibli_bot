@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-import tempfile
 
 from aiogram import F, Router
 from aiogram.types import BufferedInputFile, Message
@@ -11,13 +10,22 @@ from crud.request_transactions import add_photo_request
 from crud.save_transactions import save_output_to_db
 from crud.user_transactions import add_user
 from db.session import async_session
-from utils.image_generation import replicate_image
+from utils.image_generation import ghibli_style_transfer
 
 photo_router = Router()
 
 
 @photo_router.message(F.photo)
 async def handle_photo(message: Message) -> None:
+    """
+    Полный цикл обработки фото:
+    1. скачиваем из Telegram;
+    2. фиксируем пользователя + Request(status='processing');
+    3. сообщаем пользователю о начале работы;
+    4. отправляем изображение в Replicate;
+    5. сохраняем результат;
+    6. отвечаем пользователю.
+    """
     bot = message.bot
     tg_id = str(message.from_user.id)
     photo = message.photo[-1]
@@ -25,19 +33,14 @@ async def handle_photo(message: Message) -> None:
     tg_file = await bot.get_file(photo.file_id)
     buffer = io.BytesIO()
     await bot.download_file(tg_file.file_path, destination=buffer)
-
-    buffer.seek(0)
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
-        temp_file.write(buffer.read())
-        temp_file_path = temp_file.name
+    jpeg_bytes = buffer.getvalue()
 
     async with async_session() as session:
         user = await add_user(session, tg_id)
         req = await add_photo_request(
             session,
             user_id=user.id,
-            photo_bytes=buffer.getvalue(),
+            photo_bytes=jpeg_bytes,
         )
         await session.commit()
 
@@ -47,9 +50,7 @@ async def handle_photo(message: Message) -> None:
     )
 
     async with ChatActionSender.typing(message.chat.id, message.bot):
-        # Теперь передаем temp_file как открытый файл
-        with open(temp_file_path, "rb") as file_to_send:
-            anime_bytes = await replicate_image(file_to_send)
+        anime_bytes = await ghibli_style_transfer(jpeg_bytes)
 
     async with async_session() as session:
         await save_output_to_db(session, req.id, anime_bytes)

@@ -15,7 +15,7 @@ class User(Base):
 
 
 class Request(Base):
-    __tablename__ = "requests"
+    __tablename__ = "sessions"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), nullable=False)
     input_file: Mapped[str] = mapped_column(String, nullable=False)

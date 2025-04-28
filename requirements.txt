@@ -1,0 +1,5 @@
+aiogram
+python-decouple
+openai
+sqlalchemy
+aiosqlite

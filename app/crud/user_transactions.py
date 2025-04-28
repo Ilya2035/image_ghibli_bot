@@ -5,16 +5,14 @@ from models.orm_models import User
 
 
 async def add_user(session: AsyncSession, tg_id: str) -> User:
-    result = await session.execute(
-        insert(User)
-        .values(user_id=tg_id)
-        .on_conflict_do_nothing()
-        .returning(User)
+    user = await session.scalar(
+        select(User).where(User.user_id == tg_id)
     )
-    user = result.scalar_one_or_none()
+    if user:
+        return user
 
-    if user is None:
-        user = await session.scalar(select(User).where(User.user_id == tg_id))
-
+    result = await session.execute(
+        insert(User).values(user_id=tg_id).returning(User)
+    )
     await session.commit()
-    return user
+    return result.scalar_one()

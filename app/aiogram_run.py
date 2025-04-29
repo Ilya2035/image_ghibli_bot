@@ -3,13 +3,17 @@ import asyncio
 from create_bot import bot, dp
 from routers.start import start_router
 from routers.ghibli import photo_router
+from routers.tariff import tariff_router
+from routers.ai import ai_picker_router
 from db.init_db import init_db
 
 
 async def main() -> None:
     await init_db()
     dp.include_router(start_router)
-    dp.include_router(photo_router)
+    # dp.include_router(photo_router)
+    dp.include_router(tariff_router)
+    dp.include_router(ai_picker_router)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 

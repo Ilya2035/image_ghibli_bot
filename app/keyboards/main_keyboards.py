@@ -25,3 +25,29 @@ def kb_global() -> ReplyKeyboardMarkup:
         resize_keyboard=True,
         one_time_keyboard=False,
     )
+
+
+def kb_choice_task() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Да", callback_data="new_task:yes")
+            ],
+            [
+                InlineKeyboardButton(text="❌ Нет", callback_data="new_task:no")
+            ],
+        ]
+    )
+
+
+def kb_choice_history() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Да", callback_data="history:yes")
+            ],
+            [
+                InlineKeyboardButton(text="❌ Нет", callback_data="history:no")
+            ],
+        ]
+    )

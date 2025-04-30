@@ -27,6 +27,6 @@ async def topup(cb: CallbackQuery) -> None:
 
     await cb.answer("Баланс пополнен на 100 токенов! 🎉")
     await cb.message.answer(
-        f"Теперь у вас <b>{new_balance}</b> токенов.",
-        reply_markup=kb_balance()
+        f"Теперь у вас <b>{new_balance}</b> токенов.\n"
+        "Можете продолжить создавать запросы",
     )

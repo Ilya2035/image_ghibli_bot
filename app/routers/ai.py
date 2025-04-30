@@ -11,6 +11,7 @@ from prompt.choose_prompt import STEP_1, STEP_2, STEP_3, STEP_4
 from crud.get_balance_transactions import get_balance
 from crud.user_transactions import add_tokens
 from db.session import async_session
+from routers.tariff import tariff_entry
 
 
 ai_router = Router(name="ai_router")
@@ -97,6 +98,9 @@ async def choose_prompt(cb: CallbackQuery, state: FSMContext):
         f"• ИИ: <b>{data['ai']}</b>\n"
         f"• Категория: <b>{data['cat']}</b>\n"
         f"• Промт: <b>{data['prompt']}</b>\n\n"
+        "Если захотите прервать чат,\n"
+        "нажмите кнопку <b>Новая задача</b>\n"
+        "диалог будет сохранен в истории\n\n"
         "Теперь введите ваш текстовый запрос:"
     )
 
@@ -108,7 +112,7 @@ async def dummy_answer(msg: Message, state: FSMContext):
     tg_id = msg.from_user.id
     balance = await get_balance(tg_id)
     if balance < 10:
-        return await msg.answer(f"❗ Недостаточно токенов (есть {balance}, нужно 10).")
+        return await tariff_entry(msg)
 
     async with async_session() as session:
         new_balance = await add_tokens(session, str(tg_id), amount=-10)

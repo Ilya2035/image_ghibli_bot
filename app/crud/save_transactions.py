@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.orm_models import Request
+from models.orm_models import Session
 
 
 async def save_output_to_db(
@@ -14,8 +14,8 @@ async def save_output_to_db(
     status = "done" if output_bytes else "error"
 
     await session.execute(
-        update(Request)
-        .where(Request.id == request_id)
+        update(Session)
+        .where(Session.id == request_id)
         .values(output_file=output_bytes, status=status)
     )
     await session.flush()

@@ -1,7 +1,7 @@
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.orm_models import Request
+from models.orm_models import Session
 
 
 async def add_photo_request(
@@ -9,15 +9,15 @@ async def add_photo_request(
     *,
     user_id: int,
     photo_bytes: bytes,
-) -> Request:
+) -> Session:
     result = await session.execute(
-        insert(Request)
+        insert(Session)
         .values(
             user_id=user_id,
             input_file=photo_bytes,
             status="processing",
         )
-        .returning(Request)
+        .returning(Session)
     )
     request = result.scalar_one()
     await session.flush()

@@ -2,13 +2,13 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.orm_models import Request
+from models.orm_models import Session
 from utils.image_generation import replicate_image
 
 
 async def stylize_from_db(session: AsyncSession, request_id: int) -> Optional[bytes]:
 
-    req: Request | None = await session.get(Request, request_id)
+    req: Session | None = await session.get(Session, request_id)
     if req is None:
         return None
 

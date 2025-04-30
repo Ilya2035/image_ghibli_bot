@@ -14,18 +14,33 @@ class User(Base):
     user_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
-    sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
-    balance = relationship("UserBalance", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    sessions = relationship(
+        "Session", back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    balance = relationship(
+        "UserBalance",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 class UserBalance(Base):
     __tablename__ = "user_balances"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, unique=True)
+    id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        primary_key=True,
+        nullable=False
+    )
     balance: Mapped[int] = mapped_column(default=100)
 
-    user = relationship("User", back_populates="balance")
+    user = relationship(
+        "User",
+        back_populates="balance"
+    )
 
 
 class Session(Base):
